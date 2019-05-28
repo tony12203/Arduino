@@ -1,0 +1,40 @@
+#include "Wire.h"     // для работы с шиной I2C 
+#include "I2Cdev.h"     // для упрощения работы с гироскопом 
+#include "MPU6050.h"     // для работы со схемой MPU6050
+#define LED 13     // номер вывода светодиода
+MPU6050 gyro;     // создание экземпляра MPU6050 
+bool blinkState = false;     // булева переменная состояния светодиода 
+int16_t ax, ay, az;     // 16-бит тип со знаком, определение значений ускорения
+int16_t gx, gy, gz;     // определение значений гироскопа 
+void setup() {  
+  pinMode(LED, OUTPUT);     // установка светодиода на выход 
+  Wire.begin();     // подключение Ардуино к шине I2C в роли ведущего устройства 
+  Serial.begin(1200);     // скорость передачи данных по последовательному интерфейсу в бит/с 
+  Serial.println("Инициализация MPU"); 
+  gyro.initialize();     // инициализация датчика MPU 
+  Serial.println("Тестирование соединения устройства"); 
+  Serial.println(gyro.testConnection() ? "MPU6050 подключено" : "MPU6050 не подключено");     // вывод тестового сообщения  delay(100);     // задержка
+} 
+void loop() { 
+  gyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);     // считывание 6 значений в 6 переменных 
+  Serial.print("ax: ");     // вывод на монитор порта полученных значений
+  Serial.print(ax); 
+  Serial.print("\t");
+  Serial.print("ay: "); 
+  Serial.print(ay); 
+  Serial.print("\t");
+  Serial.print("az: "); 
+  Serial.print(az);
+  Serial.print("\t");
+  Serial.print("gx: "); 
+  Serial.print(gx); 
+  Serial.print("\t");
+  Serial.print("gy: "); 
+  Serial.print(gy); 
+  Serial.print("\t\t");
+  Serial.print("gz: "); 
+  Serial.print(gz); 
+  Serial.println();
+  blinkState = !blinkState;     // смена состояний светодиода
+  digitalWrite(LED, blinkState);     // включение светодиода путем перевода его в активное состояние
+}
