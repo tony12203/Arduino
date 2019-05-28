@@ -1,0 +1,49 @@
+// IN для задания направления вращения
+int IN1 = 7;     // Input1 подключен к выводу 7 (мотор А)
+int IN2 = 6;     // Input2 подключен к выводу 6 (мотор B)
+int IN3 = 5;     // Input3 подключен к выводу 5 (мотор А)
+int IN4 = 4;     // Input4 подключен к выводу 4 (мотор B)
+// ENA и ENB - ШИМ-выводы для управления двигателями и задания скоростей
+int ENA = 9;     // ENA подключен к ШИМ-выводу 9
+int ENB = 3;     // ENB подключен к ШИМ-выводу 3
+int k;     // счетчик для задания скорости
+void setup()
+{
+  pinMode(ENA, OUTPUT);     // установка вывода ENA на выход
+  pinMode(ENB, OUTPUT);     // установка вывода ENB на выход
+  pinMode(IN1, OUTPUT);     // установка вывода IN1 на выход
+  pinMode(IN2, OUTPUT);     // установка вывода IN2 на выход
+  pinMode(IN3, OUTPUT);     // установка вывода IN3 на выход
+  pinMode(IN4, OUTPUT);     // установка вывода IN4 на выход
+}
+void loop()
+{ // вращение мотора А по часовой
+  digitalWrite(IN1, HIGH);     
+  digitalWrite(IN3, LOW);
+  // вращение мотора B по часовой
+  digitalWrite(IN2, HIGH);    
+  digitalWrite(IN4, LOW); 
+  for (k = 20; k <= 200; k++)
+  {
+      analogWrite(ENA, k);     // увелечение скорости мотора А
+      analogWrite(ENB, k);     // увелечение скорости мотора B
+      delay(20);
+  }
+  analogWrite(ENA, 0);     // остановка мотора А
+  analogWrite(ENB, 0);     // остановка мотора В
+  delay(500);
+  // вращение мотора А против часовой
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN3, HIGH);
+  // вращение мотора В против часовой
+  digitalWrite(IN2, LOW); 
+  digitalWrite(IN4, HIGH);
+  for (k = 20; k <= 200; k++)
+  {
+      analogWrite(ENA, k);     // увелечение скорости мотора А
+      analogWrite(ENB, k);     // увелечение скорости мотора В
+      delay(20);
+  }
+  analogWrite(ENA, 0);     // остановка мотора А
+  analogWrite(ENB, 0);     // остановка мотора В
+  delay(500); }
