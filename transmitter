@@ -1,0 +1,30 @@
+#include <nRF24L01.h>
+#include <printf.h>
+#include <RF24.h>
+#include <RF24_config.h>
+#include <SPI.h>
+
+#define CE_PIN 9     // номер вывода для CE
+#define CSN_PIN 10     // номер вывода для CSN
+
+RF24 radio(CE_PIN,CSN_PIN);      // объект radio для работы с библиотекой RF24 с выставлением пинов на модуль
+const uint64_t pipe = 0x0123456789LL;       // адрес канала передачи
+int data[1];     // массив для передачи данных
+int btn = 7;     // номер вывода для кнопки
+ 
+void setup(void){
+  pinMode(btn, INPUT);      // установка вывода 7(кнопки) на вход
+  radio.begin();     // запуск работы модуля nRF24L01
+  radio.setChannel(64);     // указание канала передачи (от 0 до 126)
+  radio.setDataRate(RF24_250KBPS);     // указание скорости передачи (250KBPS, 1MBPS, 2MBPS)
+  radio.setPALevel(RF24_PA_HIGH);     // указание мощности передатчика (MIN=-18dBm, LOW=-12dBm, HIGH=-6dBm, MAX=0dBm)
+  radio.openWritingPipe(pipe);      // открытие радиоканала для передачи данных 
+ }
+ 
+void loop(void)
+{
+  if (digitalRead(btn) == HIGH){     // условие нажатия кнопки                    
+  data[0] = 55;     // запись значения 55 в массив data
+  radio.write(data, sizeof(data));     // отправка данных из массива data с указанием количества байт пакета (1)
+  } 
+}
