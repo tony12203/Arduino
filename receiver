@@ -1,0 +1,35 @@
+#include <nRF24L01.h>
+#include <printf.h>
+#include <RF24.h>
+#include <RF24_config.h>
+#include <SPI.h>
+
+#define CE_PIN 9     // номер вывода для CE
+#define CSN_PIN 10     // номер вывода для CSN
+
+RF24 radio(CE_PIN,CSN_PIN);     // объект radio для работы с библиотекой RF24 с выставлением пинов на модуль
+const uint64_t pipe = 0x0123456789LL;     // адрес канала передачи
+int data[1];     // массив для приема данных
+int LED = 2;     // номер вывода для светодиода
+ 
+void setup(void){
+  pinMode(LED, OUTPUT);     // установка вывода 2(светодиода) на выход
+  radio.begin();     // запуск работы модуля nRF24L01
+  radio.setChannel(64);     // указание канала передачи (от 0 до 126)
+  radio.setDataRate(RF24_250KBPS);     // указание скорости передачи (250KBPS, 1MBPS, 2MBPS)
+  radio.setPALevel(RF24_PA_HIGH);     // указание мощности приемника (MIN=-18dBm, LOW=-12dBm, HIGH=-6dBm, MAX=0dBm)
+  radio.openReadingPipe(1 ,pipe);       // открытие радиоканала для приема данных 
+  radio.startListening();     // включение приемника для прослушивания радиоканала
+ }
+
+void loop(void)
+{
+  if (radio.available()){     // если в буфере имеются принятые данные
+      radio.read(data, sizeof(data));      // считывание данных из массива data и задание количества считываемых байт (1)                
+      if(data[0] == 55)     // условие наличия в массиве data значение 55 
+        digitalWrite(LED, HIGH);     // включение светодиода путем перевода его вывода в активное состояние       
+      delay(10);     // ожидание 10мс, чтобы светодиод горел ярче
+   }
+      else     // если в массиве data другое значение, или нет принятых данных
+        digitalWrite(LED, LOW);       // выключение светодиода
+}
