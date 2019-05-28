@@ -1,0 +1,124 @@
+#include <SPI.h> // подключение радиомодуля по интерфейсу I2C
+#include <nRF24L01.h>
+#include <RF24.h> // для управления модулем
+const uint64_t pipe = 0xE8E8F0F0E1LL; // адрес канала передачи
+#define CE_PIN 9
+#define CSN_PIN 10
+RF24 radio(CE_PIN, CSN_PIN); // объект radio для работы с библиотекой RF24 с выставлением пинов на модуль
+int datos[3]; // массив из трех элементов для приема данных
+bool directionL;
+bool directionR; // направление вращение для L298N
+
+byte valueL;
+byte valueR; // значение ШИМ M1, M2 (0-255)
+int mLeft;
+int mRight;
+
+boolean ledOn = false;
+boolean lastBut = HIGH;
+long time = 0;
+long debounce = 300;
+int pos;
+int fspeed; // движение вперед
+int bspeed; // движение назад
+int steer;
+const int in1 = 7; // направление пин 1
+const int in2 = 6; // направление пин 2
+const int in3 = 4; // направление пин 1
+const int in4 = 2; // направление пин 2
+const int ena = 5; // ШИМ пин для изменения скорости
+const int enb = 3; // ШИМ пин для изменения скорости
+byte IsConnect; // уровень подключения
+void setup()
+{
+  pinMode(in1, OUTPUT); // подключение к L298n в качестве выхода
+  pinMode(in2, OUTPUT); // подключение к L298n в качестве выхода
+  pinMode(ena, OUTPUT); // подключение к L298n в качестве выхода
+  pinMode(in3, OUTPUT); // подключение к L298n в качестве выхода
+  pinMode(in4, OUTPUT); // подключение к L298n в качестве выхода
+  pinMode(enb, OUTPUT); // подключение к L298n в качестве выхода
+  radio.begin(); // запуск работы модуля nRF24L01
+  Serial.begin(9600); // скорость передачи по последовательному интерфейсу в бодах
+  radio.openReadingPipe(1, pipe); // открытие канала с идентификатором pipe для приема данных
+  radio.startListening(); // включение приемника для прослушивания радиоканала
+}
+
+int MotoL, MotoR;
+int ValStickX, ValStickY; // принятые данные
+
+void loop() {
+  uint8_t numero_canal; // беззнаковое целое 8-битовое значение номера канала
+  if ( radio.available()) // если в буфере имеются принятые данные 
+  {
+    radio.read(datos, sizeof(datos)); // чтение данных в массив datos и указание сколько байт читать
+    IsConnect = HIGH; // высокий уровень подключения
+  }
+  else{
+    IsConnect = LOW; // низкий уровень подключения
+  }
+    int val_x = datos[0]; // значения принятых данных
+    int val_y = datos[1];
+
+    ValStickX = map(val_x, 0, 1023, 254, -254); // изменение диапазона значений
+    ValStickY = map(val_y, 0, 1023, 254, -254);
+    //Serial.println(ValStickX);
+
+    if (abs(ValStickX) < 20) { // обнуление малых значений ValStick 
+      ValStickX = 0;
+    }
+    if (abs(ValStickY) < 20) {
+      ValStickY = 0;
+    }
+
+    MotoL = ValStickY - (ValStickX / 1.2); // расчет левого двигателя
+    MotoR = ValStickY + (ValStickX / 1.2); // расчет правого двигаетля
+   
+    if (IsConnect == LOW){MotoL = 0;} // обнуление значений двигателей при низком уровне
+    if (IsConnect == LOW){MotoR = 0;}
+    if (MotoL > 255) { // задание максимальынх и минимальных значений для левого и правого двигателей
+      MotoL = 255;
+    }
+    if (MotoR > 255) {
+      MotoR = 255;
+    }
+    if (MotoL < -255) {
+      MotoL = -255;
+    }
+    if (MotoR < -255) {
+      MotoR = -255;
+    }
+Serial.println(mLeft);
+  if (MotoL > 0) 
+  {
+    valueL = MotoL; // присвоение значения левого двигателя значению ШИМ
+    directionL = 0; 
+  }
+  else if (MotoL < 0) 
+  {
+    valueL = abs(MotoL); // присвоение абсолютного значения левого двигателя знаению ШИМ
+    directionL = 1; // смена направления вращения для L298N
+  }
+  else 
+  {
+    directionL = 0;
+    valueL = 0;
+  }
+  if (MotoR > 0) {
+    valueR = MotoR; // присвоение значения правого двигателя значению ШИМ
+    directionR = 0;
+  }
+  else if (MotoR < 0) {
+    valueR = abs(MotoR); // присвоение абсолютного значения правого двигателя знаению ШИМ
+    directionR = 1; // смена направления вращения для L298N
+  }
+  else {
+    directionR = 0;
+    valueR = 0;
+  }
+  digitalWrite(in1, directionR); // задание направления вращения для правого двигателя
+  digitalWrite(in2, !directionR);
+  digitalWrite(in3, directionL); // задание направления вращения для левого двигателя
+  digitalWrite(in4, !directionL);
+  analogWrite(ena, valueL); // задание скорости вращения для левого двигателя
+  analogWrite(enb, valueR); // задание скорости вращения для правого двигателя  
+}
